@@ -2,30 +2,37 @@
 
 const chalk = require('chalk');
 
-const asByteString = function(value) {
+const asByteString = function (value) {
   const valueAsString = `${value}`.replace("0x", "");
-  return `ByteString(Hex.decode(\"${valueAsString}\"))`
+  if (!valueAsString) return "ByteString.empty"
+  else return `ByteString(Hex.decode(\"${valueAsString}\"))`
 }
 
-const asBigInt = function(value) {
+const asBigInt = function (value) {
   return `BigInt("${value}")`
 }
 
-const transactionAsString = function(tx) {
-  return `Transaction(
-  nonce = ${tx.nonce},
-  gasPrice = BigInt(\"${tx.gasPrice.toString()}\"),
-  gasLimit = ${tx.gas},
-  receivingAddress = ${asByteString(tx.to)},
-  value = BigInt(\"${tx.value.toString()}\"),
-  payload = ${tx.input},
+const asAddress = function (address) {
+  return `Address(${asByteString(address)})`
+}
+
+const transactionAsString = function (tx) {
+  return `SignedTransaction(
+  tx = Transaction(
+    nonce = ${asBigInt(tx.nonce)},
+    gasPrice = ${asBigInt(tx.gasPrice.toString())},
+    gasLimit = ${asBigInt(tx.gas)},
+    receivingAddress = ${asAddress(tx.to)},
+    value = ${asBigInt(tx.value.toString())},
+    payload = ${asByteString(tx.input)}
+  ),
   pointSign = ${tx.v}.toByte,
   signatureRandom = ${asByteString(tx.r)},
   signature = ${asByteString(tx.s)}
 )`
 }
 
-const headerAsString = function(block) {
+const headerAsString = function (block) {
   return `BlockHeader(
   parentHash = ${asByteString(block.parentHash)},
   ommersHash = ${asByteString(block.sha3Uncles)},
@@ -45,7 +52,7 @@ const headerAsString = function(block) {
 )`
 }
 
-const bodyAsString = function(web3, block) {
+const bodyAsString = function (web3, block) {
   return `BlockBody(
   transactionList = Seq[Transaction](
     ${block.transactions.map(txId => transactionAsString(web3.eth.getTransaction(txId)))}  
@@ -56,7 +63,7 @@ const bodyAsString = function(web3, block) {
 )`
 }
 
-const receiptAsString = function(tx) {
+const receiptAsString = function (tx) {
   return `Receipt(
   postTransactionStateHash = ${asByteString(receipt.root)},
   cumulativeGasUsed = ${receipt.cumulativeGasUsed},    
@@ -67,28 +74,28 @@ const receiptAsString = function(tx) {
 
 const blockHeader = (web3) => (blockId) => {
   var block = web3.eth.getBlock(blockId)
-  if(block) console.log(headerAsString(block));
+  if (block) console.log(headerAsString(block));
   else console.error(chalk.red("Block not found"));
 }
 
 const blockBody = (web3) => (blockId) => {
   var block = web3.eth.getBlock(blockId)
 
-  if(block) console.log(bodyAsString(web3, block));
+  if (block) console.log(bodyAsString(web3, block));
   else console.error(chalk.red("Block not found"));
 }
 
 const transaction = (web3) => (txId) => {
   var tx = web3.eth.getTransaction(txId)
-  
-  if(tx) console.log(transactionAsString(tx))
+
+  if (tx) console.log(transactionAsString(tx))
   else console.error(chalk.red("Transaction not found"));
 }
 
 const receipt = (web3) => (txId) => {
   var receipt = web3.eth.getTransactionReceipt(txId)
 
-  if(receipt) console.log(receiptAsString(receipt))
+  if (receipt) console.log(receiptAsString(receipt))
   else console.error(chalk.red("Receipt not found"));
 }
 
